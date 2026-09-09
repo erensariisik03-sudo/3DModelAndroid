@@ -7,6 +7,7 @@ import android.view.SurfaceView;
 import com.google.android.filament.Camera;
 import com.google.android.filament.Engine;
 import com.google.android.filament.utils.ModelViewer;
+import com.google.android.filament.utils.Utils;
 import com.google.android.filament.android.UiHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -42,6 +43,8 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
                         | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         surfaceView.setFitsSystemWindows(false);
 
+        // Load Filament native libraries before creating the Engine.
+        Utils.INSTANCE.init();
         engine = Engine.create();
         uiHelper = new UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK);
         modelViewer = new ModelViewer(surfaceView, engine, uiHelper, null);
