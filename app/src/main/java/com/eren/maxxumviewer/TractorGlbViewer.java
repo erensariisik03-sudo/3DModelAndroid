@@ -4,8 +4,11 @@ import android.content.Context;
 import android.view.Choreographer;
 import android.view.SurfaceView;
 
-import com.google.android.filament.utils.ModelViewer;
+import com.google.android.filament.Engine;
 import com.google.android.filament.Camera;
+import com.google.android.filament.utils.ModelViewer;
+import com.google.android.filament.utils.UiHelper;
+import com.google.android.filament.utils.Manipulator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,6 +24,8 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
 
     private final Context context;
     private final SurfaceView surfaceView;
+    private final Engine engine;
+    private final UiHelper uiHelper;
     private final ModelViewer modelViewer;
     private final Choreographer choreographer = Choreographer.getInstance();
     private long startNanos;
@@ -37,7 +42,16 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
                         | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         surfaceView.setFitsSystemWindows(false);
-        modelViewer = new ModelViewer(surfaceView);
+
+        engine = Engine.create();
+        uiHelper = new UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK);
+        Manipulator manipulator = Manipulator.Builder()
+                .targetPosition(0.0, TARGET_Y, 0.0)
+                .orbitHomePosition(CAMERA_DISTANCE, CAMERA_HEIGHT, CAMERA_DISTANCE)
+                .orbitSpeed(0.0f, 0.0f)
+                .build(Manipulator.Mode.ORBIT);
+
+        modelViewer = new ModelViewer(surfaceView, engine, uiHelper, manipulator);
         loadModel();
         startNanos = System.nanoTime();
     }
@@ -94,6 +108,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
     public void destroy() {
         choreographer.removeFrameCallback(this);
         try { modelViewer.destroyModel(); } catch (Throwable ignored) { }
-        try { modelViewer.destroy(); } catch (Throwable ignored) { }
+        try { uiHelper.detach(); } catch (Throwable ignored) { }
+        try { engine.destroy(); } catch (Throwable ignored) { }
     }
 }

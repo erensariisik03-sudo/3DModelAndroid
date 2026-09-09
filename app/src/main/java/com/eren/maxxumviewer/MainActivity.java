@@ -17,23 +17,23 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setNavigationBarColor(0xFF000000);
 
-        Utils.init();
+        new Utils().init();
         viewer = new TractorGlbViewer(this);
         setContentView(viewer.getSurfaceView());
     }
 
     @Override protected void onResume() {
         super.onResume();
-        viewer.onResume();
+        if (viewer != null) viewer.onResume();
     }
 
     @Override protected void onPause() {
-        viewer.onPause();
+        if (viewer != null) viewer.onPause();
         super.onPause();
     }
 
     @Override protected void onDestroy() {
-        viewer.destroy();
+        if (viewer != null) viewer.destroy();
         super.onDestroy();
     }
 }
