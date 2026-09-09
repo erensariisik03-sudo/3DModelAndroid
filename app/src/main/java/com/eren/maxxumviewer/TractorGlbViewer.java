@@ -11,6 +11,7 @@ import com.google.android.filament.EntityManager;
 import com.google.android.filament.LightManager;
 import com.google.android.filament.utils.ModelViewer;
 import com.google.android.filament.utils.Utils;
+import com.google.android.filament.utils.Float3;
 import com.google.android.filament.android.UiHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -85,7 +86,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
 
             // Normalize origin, scale and camera framing independent of the
             // units exported by Sketchfab/Blender/etc.
-            modelViewer.transformToUnitCube();
+            modelViewer.transformToUnitCube(new Float3(0.0f, 0.0f, 0.0f));
             modelViewer.getAsset().releaseSourceData();
         } catch (IOException e) {
             throw new IllegalStateException(
