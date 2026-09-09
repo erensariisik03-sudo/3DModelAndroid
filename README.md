@@ -1,15 +1,6 @@
-# Maxxum 145 GLB Viewer
+# Maxxum 145 CVX Viewer
 
-Android full-screen, no-UI 360° 3D viewer. The old procedural test cube is removed.
+Android GLB viewer using Filament 1.51.0.
 
-## Add the actual model
-Place your downloaded Sketchfab model here:
-
-`app/src/main/assets/tractor/tractor.glb`
-
-The app opens that GLB automatically and rotates it continuously.
-
-The camera is intentionally a little farther back than the original test build.
-
-## Build
-Use GitHub Actions (`.github/workflows/build.yml`) or Android Studio.
+Place the real Sketchfab GLB at `app/src/main/assets/tractor/tractor.glb`.
+The app normalizes the model to a unit cube, adds an offline sun light, and slowly orbits the camera around it with no UI.

@@ -3,9 +3,12 @@ package com.eren.maxxumviewer;
 import android.content.Context;
 import android.view.Choreographer;
 import android.view.SurfaceView;
+import android.view.View;
 
 import com.google.android.filament.Camera;
 import com.google.android.filament.Engine;
+import com.google.android.filament.EntityManager;
+import com.google.android.filament.LightManager;
 import com.google.android.filament.utils.ModelViewer;
 import com.google.android.filament.utils.Utils;
 import com.google.android.filament.android.UiHelper;
@@ -15,56 +18,75 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-/** Full-screen GLB viewer with a slow automatic orbit camera. */
+/** Full-screen GLB viewer. The model is normalized to a unit cube, then the
+ * camera orbits around the normalized model so camera distance is independent
+ * of the GLB's original units/scale.
+ */
 public final class TractorGlbViewer implements Choreographer.FrameCallback {
-    private static final double CAMERA_DISTANCE = 9.4;
-    private static final double CAMERA_HEIGHT = 2.35;
-    private static final double TARGET_Y = 0.85;
-    private static final double DEGREES_PER_SECOND = 12.0;
+    private static final double CAMERA_DISTANCE = 3.15;
+    private static final double CAMERA_HEIGHT = 1.15;
+    private static final double TARGET_Y = 0.05;
+    private static final double DEGREES_PER_SECOND = 10.0;
 
-    private final Context context;
     private final SurfaceView surfaceView;
     private final Engine engine;
     private final UiHelper uiHelper;
     private final ModelViewer modelViewer;
     private final Choreographer choreographer = Choreographer.getInstance();
+    private final int sunEntity;
+
     private long startNanos;
     private boolean started;
 
     public TractorGlbViewer(Context context) {
-        this.context = context;
         surfaceView = new SurfaceView(context);
         surfaceView.setSystemUiVisibility(
-                android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         surfaceView.setFitsSystemWindows(false);
 
-        // Load Filament native libraries before creating the Engine.
         Utils.INSTANCE.init();
         engine = Engine.create();
         uiHelper = new UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK);
         modelViewer = new ModelViewer(surfaceView, engine, uiHelper, null);
 
+        // The test model can be completely black without an IBL. Add a strong
+        // sun light so standard GLB/PBR materials remain visible offline.
+        sunEntity = EntityManager.get().create();
+        new LightManager.Builder(LightManager.Type.SUN)
+                .color(1.0f, 0.97f, 0.90f)
+                .intensity(80000.0f)
+                .direction(-0.45f, -1.0f, -0.35f)
+                .castShadows(true)
+                .build(engine, sunEntity);
+        modelViewer.getScene().addEntity(sunEntity);
+
         loadModel();
+        started = true;
         startNanos = System.nanoTime();
     }
 
     public SurfaceView getSurfaceView() { return surfaceView; }
 
     private void loadModel() {
-        try (InputStream in = context.getAssets().open("tractor/tractor.glb")) {
+        try (InputStream in = surfaceView.getContext().getAssets().open("tractor/tractor.glb")) {
             byte[] bytes = readAll(in);
             ByteBuffer buffer = ByteBuffer.allocateDirect(bytes.length);
             buffer.put(bytes).flip();
             modelViewer.loadModelGlb(buffer);
-            if (modelViewer.getAsset() != null) {
-                modelViewer.getAsset().releaseSourceData();
+
+            if (modelViewer.getAsset() == null) {
+                throw new IllegalStateException("GLB yüklenemedi: tractor/tractor.glb geçerli bir glTF binary dosyası değil.");
             }
-            started = true;
+
+            // Normalize origin, scale and camera framing independent of the
+            // units exported by Sketchfab/Blender/etc.
+            modelViewer.transformToUnitCube();
+            modelViewer.getAsset().releaseSourceData();
         } catch (IOException e) {
             throw new IllegalStateException(
                     "GLB bulunamadı. app/src/main/assets/tractor/tractor.glb konumuna koyun.", e);
@@ -97,6 +119,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
 
     public void onResume() {
         choreographer.removeFrameCallback(this);
+        startNanos = System.nanoTime();
         choreographer.postFrameCallback(this);
     }
 
@@ -107,6 +130,8 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
     public void destroy() {
         choreographer.removeFrameCallback(this);
         try { modelViewer.destroyModel(); } catch (Throwable ignored) { }
+        try { modelViewer.getScene().removeEntity(sunEntity); } catch (Throwable ignored) { }
+        try { engine.destroyEntity(sunEntity); } catch (Throwable ignored) { }
         try { uiHelper.detach(); } catch (Throwable ignored) { }
         try { engine.destroy(); } catch (Throwable ignored) { }
     }
