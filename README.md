@@ -1,15 +1,15 @@
-# Maxxum 145 CVX — Android 360° Viewer
+# Maxxum 145 GLB Viewer
 
-Bu repo, ekransız/minimal bir Android uygulamasının temelini içerir. Uygulama açıldığında tam ekran OpenGL ES görüntüsü gelir ve geçici traktör önizleme mesh'i kendi etrafında yavaşça döner. Kamera önceki sürüme göre biraz daha geridedir; traktör kadrajda daha rahat görünür.
+Android full-screen, no-UI 360° 3D viewer. The old procedural test cube is removed.
 
-## Traktör dosyaları
-Orijinal GIANTS Engine asset'i şu konumdadır:
+## Add the actual model
+Place your downloaded Sketchfab model here:
 
-`app/src/main/assets/tractor_source/maxxum145CVX.zip`
+`app/src/main/assets/tractor/tractor.glb`
 
-ZIP içindeki ana dosyalar `.i3d`, `.i3d.shapes` ve `.ast` texture asset'leridir. Android renderer bunları doğrudan kullanmaz; hedef format **glTF/GLB** olacaktır.
+The app opens that GLB automatically and rotates it continuously.
+
+The camera is intentionally a little farther back than the original test build.
 
 ## Build
-Android Studio'da projeyi açın ve `app` modülünü çalıştırın. Ya da kökte Gradle wrapper oluşturup `./gradlew assembleDebug` kullanabilirsiniz.
-
-> Not: Bu paket, gerçek `.i3d` modelini henüz GLB'ye dönüştürmüyor. Önizleme renderer'ı derlenebilir bir başlangıç noktasıdır. Sonraki adımda asset conversion + GLB yükleyicisi eklenmelidir.
+Use GitHub Actions (`.github/workflows/build.yml`) or Android Studio.

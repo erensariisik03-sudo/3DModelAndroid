@@ -1,0 +1,2 @@
+Rename your downloaded GLB to tractor.glb and place it beside this file:
+app/src/main/assets/tractor/tractor.glb

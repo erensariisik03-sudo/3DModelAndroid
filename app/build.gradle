@@ -1,5 +1,19 @@
 plugins { id 'com.android.application' }
 
-android { namespace 'com.eren.maxxumviewer'; compileSdk 35
-    defaultConfig { applicationId 'com.eren.maxxumviewer'; minSdk 24; targetSdk 35; versionCode 1; versionName '1.0' }
+android {
+    namespace 'com.eren.maxxumviewer'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.eren.maxxumviewer'
+        minSdk 24
+        targetSdk 35
+        versionCode 2
+        versionName '1.1'
+    }
+}
+
+dependencies {
+    implementation 'com.google.android.filament:filament-android:1.51.0'
+    implementation 'com.google.android.filament:gltfio-android:1.51.0'
+    implementation 'com.google.android.filament:filament-utils-android:1.51.0'
 }
