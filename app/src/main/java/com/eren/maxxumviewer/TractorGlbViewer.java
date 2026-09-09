@@ -4,11 +4,10 @@ import android.content.Context;
 import android.view.Choreographer;
 import android.view.SurfaceView;
 
-import com.google.android.filament.Engine;
 import com.google.android.filament.Camera;
+import com.google.android.filament.Engine;
 import com.google.android.filament.utils.ModelViewer;
-import com.google.android.filament.utils.UiHelper;
-import com.google.android.filament.utils.Manipulator;
+import com.google.android.filament.android.UiHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,13 +44,8 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
 
         engine = Engine.create();
         uiHelper = new UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK);
-        Manipulator manipulator = Manipulator.Builder()
-                .targetPosition(0.0, TARGET_Y, 0.0)
-                .orbitHomePosition(CAMERA_DISTANCE, CAMERA_HEIGHT, CAMERA_DISTANCE)
-                .orbitSpeed(0.0f, 0.0f)
-                .build(Manipulator.Mode.ORBIT);
+        modelViewer = new ModelViewer(surfaceView, engine, uiHelper, null);
 
-        modelViewer = new ModelViewer(surfaceView, engine, uiHelper, manipulator);
         loadModel();
         startNanos = System.nanoTime();
     }
@@ -70,7 +64,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             started = true;
         } catch (IOException e) {
             throw new IllegalStateException(
-                    "GLB bulunamadı. Dosyayı app/src/main/assets/tractor/tractor.glb konumuna koyun.", e);
+                    "GLB bulunamadı. app/src/main/assets/tractor/tractor.glb konumuna koyun.", e);
         }
     }
 
@@ -90,7 +84,9 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             double z = Math.cos(angle) * CAMERA_DISTANCE;
 
             Camera camera = modelViewer.getCamera();
-            camera.lookAt(x, CAMERA_HEIGHT, z, 0.0, TARGET_Y, 0.0, 0.0, 1.0, 0.0);
+            camera.lookAt(x, CAMERA_HEIGHT, z,
+                    0.0, TARGET_Y, 0.0,
+                    0.0, 1.0, 0.0);
             modelViewer.render(frameTimeNanos);
         }
         choreographer.postFrameCallback(this);

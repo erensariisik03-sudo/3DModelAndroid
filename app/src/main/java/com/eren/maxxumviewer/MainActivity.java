@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.google.android.filament.utils.Utils;
-
 public class MainActivity extends Activity {
     private TractorGlbViewer viewer;
 
@@ -17,7 +15,6 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setNavigationBarColor(0xFF000000);
 
-        new Utils().init();
         viewer = new TractorGlbViewer(this);
         setContentView(viewer.getSurfaceView());
     }
