@@ -10,7 +10,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Temporary renderer: a clean, no-UI 360° tractor preview.
+ * Temporary renderer: a clean, no-UI 360° tractor preview with a slightly wider camera distance.
  * The shipped GIANTS asset is kept under assets/tractor_source and can replace
  * this procedural mesh after conversion to glTF/GLB.
  */
@@ -31,12 +31,12 @@ public class TractorRenderer implements GLSurfaceView.Renderer {
     @Override public void onSurfaceChanged(GL10 gl, int w, int h){
         GLES20.glViewport(0,0,w,h);
         float ratio=(float)w/h;
-        Matrix.perspectiveM(proj,0,35f,ratio,0.1f,100f);
+        Matrix.perspectiveM(proj,0,37f,ratio,0.1f,100f);
     }
     @Override public void onDrawFrame(GL10 gl){
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        Matrix.setLookAtM(view,0,0f,2.0f,7.0f,0f,0.8f,0f,0f,1f,0f);
+        Matrix.setLookAtM(view,0,0f,2.15f,8.6f,0f,0.8f,0f,0f,1f,0f);
         float sec=(System.nanoTime()-start)/1_000_000_000f;
         drawTractor(sec*12f);
     }

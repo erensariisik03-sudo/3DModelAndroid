@@ -1,6 +1,6 @@
 # Maxxum 145 CVX — Android 360° Viewer
 
-Bu repo, ekransız/minimal bir Android uygulamasının temelini içerir. Uygulama açıldığında tam ekran OpenGL ES görüntüsü gelir ve geçici traktör önizleme mesh'i kendi etrafında yavaşça döner.
+Bu repo, ekransız/minimal bir Android uygulamasının temelini içerir. Uygulama açıldığında tam ekran OpenGL ES görüntüsü gelir ve geçici traktör önizleme mesh'i kendi etrafında yavaşça döner. Kamera önceki sürüme göre biraz daha geridedir; traktör kadrajda daha rahat görünür.
 
 ## Traktör dosyaları
 Orijinal GIANTS Engine asset'i şu konumdadır:
