@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.google.android.filament.Camera;
+import com.google.android.filament.TransformManager;
+import com.google.android.filament.gltfio.FilamentAsset;
 import com.google.android.filament.Engine;
 import com.google.android.filament.EntityManager;
 import com.google.android.filament.LightManager;
@@ -27,18 +29,19 @@ import java.nio.ByteBuffer;
  * transition is shown, similar to a showroom / truck-gallery presentation.
  */
 public final class TractorGlbViewer implements Choreographer.FrameCallback {
-    // Wider / higher camera requested by the user.
-    private static final double CAMERA_DISTANCE = 12.5;
-    private static final double CAMERA_HEIGHT = 4.0;
-    private static final double TARGET_Y = 0.5;
+    // Fixed showroom camera: farther away and slightly above the car.
+    // The camera itself no longer orbits; the model rotates around its own center.
+    private static final double CAMERA_X = 11.5;
+    private static final double CAMERA_Y = 5.2;
+    private static final double CAMERA_Z = 13.5;
+    private static final double TARGET_Y = 0.35;
 
-    // Negative angular speed => reverse direction compared with the previous build.
-    // This is the direction intended as "right" for the presentation orbit.
-    private static final double DEGREES_PER_SECOND = -12.0;
+    // Positive Y rotation is used for the requested visual "right" rotation.
+    private static final double MODEL_DEGREES_PER_SECOND = 12.0;
 
-    // Four quarter-turn presentation cuts.
+    // Presentation transition every 90 degrees.
     private static final double ANGLE_PER_CUT = Math.PI / 2.0;
-    private static final long FADE_MS = 650L;
+    private static final long FADE_MS = 1300L;
 
     private final FrameLayout container;
     private final SurfaceView surfaceView;
@@ -50,9 +53,12 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
     private final int[] lightEntities = new int[4];
 
     private long lastFrameNanos = 0L;
-    private double orbitAngle = Math.toRadians(25.0);
+    private double modelAngle = Math.toRadians(25.0);
     private double lastCutBoundary;
     private boolean started;
+    private int modelRootEntity = 0;
+    private TransformManager transformManager;
+    private float[] baseRootTransform = null;
     private float fadeAlpha = 0.0f;
     private long fadeStartNanos = -1L;
 
@@ -140,6 +146,14 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             // Normalize once so the camera settings are predictable across Sketchfab models.
             modelViewer.transformToUnitCube(new com.google.android.filament.utils.Float3(
                     0.0f, 0.0f, 0.0f));
+
+            // Capture the normalized root transform once. Every animation frame composes
+            // a Y-axis rotation with this base transform so scale/centering never drift.
+            FilamentAsset asset = modelViewer.getAsset();
+            modelRootEntity = asset.getRoot();
+            transformManager = engine.getTransformManager();
+            int rootInstance = transformManager.getInstance(modelRootEntity);
+            baseRootTransform = transformManager.getTransform(rootInstance, new float[16]);
         } catch (IOException e) {
             throw new IllegalStateException(
                     "GLB bulunamadı: app/src/main/assets/tractor/tractor.glb", e);
@@ -162,11 +176,11 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             if (lastFrameNanos != 0L) {
                 double dt = (frameTimeNanos - lastFrameNanos) / 1_000_000_000.0;
                 if (dt > 0.0 && dt < 0.25) {
-                    double oldAngle = orbitAngle;
-                    orbitAngle += Math.toRadians(DEGREES_PER_SECOND) * dt;
+                    modelAngle += Math.toRadians(MODEL_DEGREES_PER_SECOND) * dt;
+                    modelAngle = normalizeAngle(modelAngle);
 
-                    // Periodic quarter-turn fade, independent of the device refresh rate.
-                    double newBoundary = quantizeBoundary(orbitAngle);
+                    // Fade at each 90-degree presentation boundary.
+                    double newBoundary = quantizeBoundary(modelAngle);
                     if (newBoundary != lastCutBoundary) {
                         lastCutBoundary = newBoundary;
                         fadeStartNanos = frameTimeNanos;
@@ -175,11 +189,13 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             }
             lastFrameNanos = frameTimeNanos;
 
+            applyModelRotation();
+
+            // Fixed camera: only the model rotates, which makes the presentation direction
+            // deterministic and prevents the previous camera-orbit issue.
             Camera camera = modelViewer.getCamera();
-            double x = Math.sin(orbitAngle) * CAMERA_DISTANCE;
-            double z = Math.cos(orbitAngle) * CAMERA_DISTANCE;
             camera.lookAt(
-                    x, CAMERA_HEIGHT, z,
+                    CAMERA_X, CAMERA_Y, CAMERA_Z,
                     0.0, TARGET_Y, 0.0,
                     0.0, 1.0, 0.0);
 
@@ -187,6 +203,48 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
             updateFade(frameTimeNanos);
         }
         choreographer.postFrameCallback(this);
+    }
+
+    private void applyModelRotation() {
+        if (modelRootEntity == 0 || transformManager == null || baseRootTransform == null) {
+            return;
+        }
+
+        double c = Math.cos(modelAngle);
+        double sn = Math.sin(modelAngle);
+
+        // Column-major 4x4 rotation around +Y (Filament / OpenGL convention).
+        float[] rot = new float[] {
+                (float)c, 0.0f, (float)-sn, 0.0f,
+                0.0f,    1.0f, 0.0f,       0.0f,
+                (float)sn, 0.0f, (float)c,  0.0f,
+                0.0f,    0.0f, 0.0f,       1.0f
+        };
+
+        float[] out = multiplyMat4(baseRootTransform, rot);
+        int rootInstance = transformManager.getInstance(modelRootEntity);
+        transformManager.setTransform(rootInstance, out);
+    }
+
+    private static float[] multiplyMat4(float[] a, float[] b) {
+        float[] r = new float[16];
+        for (int col = 0; col < 4; col++) {
+            for (int row = 0; row < 4; row++) {
+                float v = 0.0f;
+                for (int k = 0; k < 4; k++) {
+                    v += a[k * 4 + row] * b[col * 4 + k];
+                }
+                r[col * 4 + row] = v;
+            }
+        }
+        return r;
+    }
+
+    private static double normalizeAngle(double angle) {
+        double twoPi = Math.PI * 2.0;
+        angle %= twoPi;
+        if (angle < 0.0) angle += twoPi;
+        return angle;
     }
 
     private static double quantizeBoundary(double angle) {

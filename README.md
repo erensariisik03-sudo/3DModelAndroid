@@ -11,3 +11,7 @@ Fullscreen Android 3D showcase for the supplied orange Fast & Furious-style Supr
 
 ## Model
 The supplied `tractor.glb` is already included at `app/src/main/assets/tractor/tractor.glb`.
+
+
+## Showroom behavior
+The camera is fixed at a slightly elevated three-quarter view while the GLB root rotates on the +Y axis at 12 degrees/second. A 1.3-second black transition is triggered at each 90-degree presentation boundary.
