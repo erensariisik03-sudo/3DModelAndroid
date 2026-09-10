@@ -1,12 +1,11 @@
-# Maxxum 145 CVX Viewer
+# FNF Supra 360
 
-Android GLB viewer using Filament 1.51.0.
+Fullscreen Android GLB viewer for the uploaded orange 1994 Toyota Supra MK IV Bomex / Fast & Furious model.
 
-Place the real Sketchfab GLB at `app/src/main/assets/tractor/tractor.glb`.
-The app normalizes the model to a unit cube, adds an offline sun light, and slowly orbits the camera around it with no UI.
+The app has no visible controls. It loads `app/src/main/assets/tractor/tractor.glb`, frames the model automatically, and continuously orbits the camera around it.
 
-## GLB placement
-Put the model here:
-`app/src/main/assets/tractor/tractor.glb`
+The GLB is embedded in the APK; no network connection is required to display the model.
 
-The viewer normalizes the loaded GLB around the origin and automatically orbits the camera.
+## GitHub Actions
+
+Run **Actions → Build FNF Supra 360 APK → Run workflow**. The generated debug APK is published as the `FNF-Supra-360-debug-apk` artifact.
