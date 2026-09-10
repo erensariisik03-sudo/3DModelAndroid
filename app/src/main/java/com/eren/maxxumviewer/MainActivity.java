@@ -17,7 +17,7 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(0xFF000000);
 
         viewer = new TractorGlbViewer(this);
-        setContentView(viewer.getSurfaceView());
+        setContentView(viewer.getContainer());
     }
 
     @Override protected void onResume() {
