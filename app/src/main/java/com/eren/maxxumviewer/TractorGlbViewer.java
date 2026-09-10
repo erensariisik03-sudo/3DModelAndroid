@@ -142,7 +142,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
                     0.0, 1.0, 0.0);
 
             if (baseTransformReady && transformManager != null && modelRootEntity != 0) {
-                TransformManager.Instance root = transformManager.getInstance(modelRootEntity);
+                int root = transformManager.getInstance(modelRootEntity);
                 float a = (float) orbitAngle;
                 float c = (float) Math.cos(a);
                 float s = (float) Math.sin(a);
@@ -155,7 +155,7 @@ public final class TractorGlbViewer implements Choreographer.FrameCallback {
                         s, 0.0f, c, 0.0f,
                         0.0f, 0.0f, 0.0f, 1.0f
                 };
-                float[] out = multiply4x4(rot, baseRootTransform);
+                float[] out = multiply4x4(baseRootTransform, rot);
                 transformManager.setTransform(root, out);
             }
 
